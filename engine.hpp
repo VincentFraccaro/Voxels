@@ -15,12 +15,21 @@
 #include <glm/gtx/transform.hpp>
 #include <unordered_map>
 
+struct GPUCameraData {
+    glm::mat4 view;
+    glm::mat4 projection;
+    glm::mat4 viewproj;
+};
+
 struct FrameData {
     VkSemaphore presentSemaphore, renderSemaphore;
     VkFence renderFence;
 
     VkCommandPool commandPool;
     VkCommandBuffer mainCommandBuffer;
+
+    AllocatedBuffer cameraBuffer;
+    VkDescriptorSet globalDescriptor;
 
     static constexpr unsigned int FRAME_OVERLAP = 2;
 };
@@ -88,6 +97,8 @@ public:
     Mesh *getMesh(const std::string &name);
     void drawObjects(VkCommandBuffer cmd, RenderObject *first, int count);
     void initScene();
+    AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+    void initDescriptors();
 
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
@@ -131,6 +142,9 @@ public:
     AllocatedImage depthImage;
 
     VkFormat depthFormat;
+
+    VkDescriptorSetLayout globalSetLayout;
+    VkDescriptorPool descriptorPool;
 
     FrameData frames[FrameData::FRAME_OVERLAP];
     FrameData& getCurrentFrame();

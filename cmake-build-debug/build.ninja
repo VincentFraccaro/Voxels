@@ -106,6 +106,15 @@ build CMakeFiles/Voxels.dir/mesh.cpp.obj: CXX_COMPILER__Voxels_Debug ../mesh.cpp
   TARGET_COMPILE_PDB = CMakeFiles\Voxels.dir\
   TARGET_PDB = Voxels.pdb
 
+build CMakeFiles/Voxels.dir/keyboardInput.cpp.obj: CXX_COMPILER__Voxels_Debug ../keyboardInput.cpp || cmake_object_order_depends_target_Voxels
+  DEP_FILE = CMakeFiles\Voxels.dir\keyboardInput.cpp.obj.d
+  FLAGS = -municode -g -Xclang -gcodeview -O0 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd -std=gnu++20
+  INCLUDES = -I../include -I../include/SDL2 -isystem C:/VulkanSDK/1.2.182.0/Include
+  OBJECT_DIR = CMakeFiles\Voxels.dir
+  OBJECT_FILE_DIR = CMakeFiles\Voxels.dir
+  TARGET_COMPILE_PDB = CMakeFiles\Voxels.dir\
+  TARGET_PDB = Voxels.pdb
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target Voxels
@@ -114,7 +123,7 @@ build CMakeFiles/Voxels.dir/mesh.cpp.obj: CXX_COMPILER__Voxels_Debug ../mesh.cpp
 #############################################
 # Link the executable Voxels.exe
 
-build Voxels.exe: CXX_EXECUTABLE_LINKER__Voxels_Debug CMakeFiles/Voxels.dir/main.cpp.obj CMakeFiles/Voxels.dir/types.cpp.obj CMakeFiles/Voxels.dir/init.cpp.obj CMakeFiles/Voxels.dir/engine.cpp.obj CMakeFiles/Voxels.dir/VkBootstrap.cpp.obj CMakeFiles/Voxels.dir/pipeline.cpp.obj CMakeFiles/Voxels.dir/mesh.cpp.obj | C$:/VulkanSDK/1.2.182.0/Lib/vulkan-1.lib ../lib/SDL2.lib ../lib/SDL2main.lib
+build Voxels.exe: CXX_EXECUTABLE_LINKER__Voxels_Debug CMakeFiles/Voxels.dir/main.cpp.obj CMakeFiles/Voxels.dir/types.cpp.obj CMakeFiles/Voxels.dir/init.cpp.obj CMakeFiles/Voxels.dir/engine.cpp.obj CMakeFiles/Voxels.dir/VkBootstrap.cpp.obj CMakeFiles/Voxels.dir/pipeline.cpp.obj CMakeFiles/Voxels.dir/mesh.cpp.obj CMakeFiles/Voxels.dir/keyboardInput.cpp.obj | C$:/VulkanSDK/1.2.182.0/Lib/vulkan-1.lib ../lib/SDL2.lib ../lib/SDL2main.lib
   FLAGS = -municode -g -Xclang -gcodeview -O0 -D_DEBUG -D_DLL -D_MT -Xclang --dependent-lib=msvcrtd
   LINK_FLAGS = -Xlinker /subsystem:console
   LINK_LIBRARIES = C:/VulkanSDK/1.2.182.0/Lib/vulkan-1.lib  ../lib/SDL2.lib  ../lib/SDL2main.lib  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -loldnames

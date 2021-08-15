@@ -6,7 +6,7 @@
 #define VOXELS_KEYBOARDINPUT_HPP
 
 
-class keyboardInput {
+class KeyboardInput {
 
 };
 

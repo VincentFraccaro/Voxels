@@ -23,7 +23,7 @@ include_directories(include/SDL2)
 include_directories("$ENV{VULKAN_SDK}/Include")
 
 
-add_executable(Voxels main.cpp types.cpp types.hpp init.cpp init.hpp engine.cpp engine.hpp VkBootstrap.cpp VkBootstrap.h VkBootstrapDispatch.h pipeline.cpp pipeline.hpp include/vk_mem_alloc.h mesh.cpp mesh.hpp include/tiny_obj_loader.h)
+add_executable(Voxels main.cpp types.cpp types.hpp init.cpp init.hpp engine.cpp engine.hpp VkBootstrap.cpp VkBootstrap.h VkBootstrapDispatch.h pipeline.cpp pipeline.hpp include/vk_mem_alloc.h mesh.cpp mesh.hpp include/tiny_obj_loader.h keyboardInput.cpp keyboardInput.hpp)
 
 find_package(Vulkan REQUIRED)
 find_library(SDL2 NAMES SDL2 HINTS ${FIND_SDL2MAIN_PATHS})
