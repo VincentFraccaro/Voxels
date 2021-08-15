@@ -15,6 +15,16 @@
 #include <glm/gtx/transform.hpp>
 #include <unordered_map>
 
+struct FrameData {
+    VkSemaphore presentSemaphore, renderSemaphore;
+    VkFence renderFence;
+
+    VkCommandPool commandPool;
+    VkCommandBuffer mainCommandBuffer;
+
+    static constexpr unsigned int FRAME_OVERLAP = 2;
+};
+
 struct Material {
     VkPipeline pipeline;
     VkPipelineLayout  pipelineLayout;
@@ -93,15 +103,10 @@ public:
     VkQueue graphicsQueue;
 
     uint32_t  graphicsQueueFamily;
-    VkCommandPool commandPool;
-
-    VkCommandBuffer mainCommandBuffer;
     VkRenderPass renderPass;
 
     std::vector<VkFramebuffer> frameBuffers;
-    VkSemaphore presentSemaphore, renderSemaphore;
 
-    VkFence renderFence;
     VkPipelineLayout pipelineLayout;
     VkPipelineLayout meshPipelineLayout;
     VkPipeline pipeline;
@@ -126,6 +131,9 @@ public:
     AllocatedImage depthImage;
 
     VkFormat depthFormat;
+
+    FrameData frames[FrameData::FRAME_OVERLAP];
+    FrameData& getCurrentFrame();
 
 };
 

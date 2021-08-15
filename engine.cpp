@@ -37,11 +37,7 @@ void Engine::init() {
 void Engine::cleanup() {
     if(isInitialized){
         vkDeviceWaitIdle(device);
-        vkDestroyFence(device, renderFence, nullptr);
-        vkDestroySemaphore(device, presentSemaphore, nullptr);
-        vkDestroySemaphore(device, renderSemaphore, nullptr);
         vkDestroyRenderPass(device, renderPass, nullptr);
-        vkDestroyCommandPool(device, commandPool, nullptr);
         vkDestroySwapchainKHR(device, swapchain, nullptr);
 
         //destroy swapchain resources
@@ -58,23 +54,23 @@ void Engine::cleanup() {
 }
 
 void Engine::draw() {
-    if(vkWaitForFences(device, 1, &renderFence, true, 1000000000) != VK_SUCCESS){
+    if(vkWaitForFences(device, 1, &getCurrentFrame().renderFence, true, 1000000000) != VK_SUCCESS){
         std::cout << "Why can't it be patient?\n";
     }
-    if(vkResetFences(device, 1, &renderFence) != VK_SUCCESS){
+    if(vkResetFences(device, 1, &getCurrentFrame().renderFence) != VK_SUCCESS){
         std::cout << "Why can't I reset fence\n";
     }
 
     uint32_t swapchainImageIndex;
-    if(vkAcquireNextImageKHR(device, swapchain, 1000000000, presentSemaphore, nullptr, &swapchainImageIndex) != VK_SUCCESS){
+    if(vkAcquireNextImageKHR(device, swapchain, 1000000000, getCurrentFrame().presentSemaphore, nullptr, &swapchainImageIndex) != VK_SUCCESS){
         std::cout << "couldn't get next thing mate\n";
     }
 
-    if(vkResetCommandBuffer(mainCommandBuffer, 0) != VK_SUCCESS){
+    if(vkResetCommandBuffer(getCurrentFrame().mainCommandBuffer, 0) != VK_SUCCESS){
         std::cout << "Couldn't reset commandbuffer xD \n";
     }
 
-    VkCommandBuffer cmd = mainCommandBuffer;
+    VkCommandBuffer cmd = getCurrentFrame().mainCommandBuffer;
     VkCommandBufferBeginInfo cmdBeginInfo = {};
     cmdBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     cmdBeginInfo.pNext = nullptr;
@@ -124,13 +120,13 @@ void Engine::draw() {
     VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     submit.pWaitDstStageMask = &waitStage;
     submit.waitSemaphoreCount = 1;
-    submit.pWaitSemaphores = &presentSemaphore;
+    submit.pWaitSemaphores = &getCurrentFrame().presentSemaphore;
     submit.signalSemaphoreCount = 1;
-    submit.pSignalSemaphores = &renderSemaphore;
+    submit.pSignalSemaphores = &getCurrentFrame().renderSemaphore;
     submit.commandBufferCount = 1;
     submit.pCommandBuffers = &cmd;
 
-    if(vkQueueSubmit(graphicsQueue, 1, &submit, renderFence) != VK_SUCCESS){
+    if(vkQueueSubmit(graphicsQueue, 1, &submit, getCurrentFrame().renderFence) != VK_SUCCESS){
         std::cout << "Couldn't submit the render stuff to the queue thing \n";
     }
 
@@ -141,7 +137,7 @@ void Engine::draw() {
     presentInfo.pSwapchains = &swapchain;
     presentInfo.swapchainCount = 1;
 
-    presentInfo.pWaitSemaphores = &renderSemaphore;
+    presentInfo.pWaitSemaphores = &getCurrentFrame().renderSemaphore;
     presentInfo.waitSemaphoreCount = 1;
 
     presentInfo.pImageIndices = &swapchainImageIndex;
@@ -247,14 +243,21 @@ void Engine::initSwapchain() {
 
 void Engine::initCommands() {
     VkCommandPoolCreateInfo commandPoolInfo = init1.command_pool_create_info(graphicsQueueFamily, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    if(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &commandPool) != VK_SUCCESS){
-        throw std::runtime_error("Fk");
-    }
 
-    VkCommandBufferAllocateInfo cmdAllocInfo = init1.command_buffer_allocate_info(commandPool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-    if(vkAllocateCommandBuffers(device, &cmdAllocInfo, &mainCommandBuffer) != VK_SUCCESS){
-        throw std::runtime_error("Fk");
-    };
+    for(int i = 0; i < frames->FRAME_OVERLAP; i++){
+        if(vkCreateCommandPool(device, &commandPoolInfo, nullptr, &frames[i].commandPool) != VK_SUCCESS){
+            std::cerr << "Error in making command pool\n";
+        }
+
+        VkCommandBufferAllocateInfo cmdAllocInfo = init1.command_buffer_allocate_info(frames[i].commandPool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+        if(vkAllocateCommandBuffers(device, &cmdAllocInfo, &frames[i].mainCommandBuffer) != VK_SUCCESS){
+            std::cerr << "Couldn't make main command buffer\n";
+        }
+
+        deletionQueue.push_function([=](){
+            vkDestroyCommandPool(device, frames[i].commandPool, nullptr);
+        });
+    }
 }
 
 void Engine::initDefaultRenderpass() {
@@ -345,26 +348,38 @@ void Engine::initSync() {
     VkFenceCreateInfo fenceCreateInfo = {};
     fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceCreateInfo.pNext = nullptr;
-
     //we want to create the fence with the Create Signaled flag, so we can wait on it before using it on a GPU command (for the first frame)
     fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-    if(vkCreateFence(device, &fenceCreateInfo, nullptr, &renderFence) != VK_SUCCESS){
-        throw std::runtime_error("Error in the fence creation stuff");
-    }
-
     //for the semaphores we don't need any flags
     VkSemaphoreCreateInfo semaphoreCreateInfo = {};
     semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     semaphoreCreateInfo.pNext = nullptr;
     semaphoreCreateInfo.flags = 0;
 
-    if(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &presentSemaphore) != VK_SUCCESS){
-        throw std::runtime_error("Error in the fence creation stuff");
+    for(int i = 0; i < frames->FRAME_OVERLAP; i++){
+        if(vkCreateFence(device, &fenceCreateInfo, nullptr, &frames[i].renderFence) != VK_SUCCESS){
+            std::cerr << "Failed at creating the fence\n";
+        }
+
+        deletionQueue.push_function([=](){
+            vkDestroyFence(device, frames[i].renderFence, nullptr);
+        });
+
+        if(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frames[i].presentSemaphore) != VK_SUCCESS){
+            std::cerr << "Failed at creating the present sempahore\n";
+        }
+        if(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &frames[i].renderSemaphore) != VK_SUCCESS){
+            std::cerr << "Failed at creating the render Sempahore\n";
+        }
+
+        deletionQueue.push_function([=](){
+            vkDestroySemaphore(device, frames[i].presentSemaphore, nullptr);
+            vkDestroySemaphore(device, frames[i].renderSemaphore, nullptr);
+        });
+
+
     }
-    if(vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &renderSemaphore) != VK_SUCCESS){
-        throw std::runtime_error("Error in the fence creation stuff");
-    }
+
 }
 
 bool Engine::loadShaderModule(const char *filepath, VkShaderModule *outShaderFile) {
@@ -621,4 +636,8 @@ void Engine::initScene() {
             renderables.push_back(tri);
         }
     }
+}
+
+FrameData &Engine::getCurrentFrame() {
+    return frames[frameNumber % frames->FRAME_OVERLAP];
 }
