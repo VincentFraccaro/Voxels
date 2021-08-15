@@ -1,0 +1,3 @@
+C:/Users/Vincent/Desktop/LearningVulkan/Voxel Thing/cmake-build-debug/CMakeFiles/Voxels.dir
+C:/Users/Vincent/Desktop/LearningVulkan/Voxel Thing/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Vincent/Desktop/LearningVulkan/Voxel Thing/cmake-build-debug/CMakeFiles/rebuild_cache.dir
